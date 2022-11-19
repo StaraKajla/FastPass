@@ -1,16 +1,16 @@
-# FastPass
+# FastPass<br>
 Local password manager
 
-**How to run:**
+**How to run:**<br>
 Download sourcecode and run it. On first run the app will create its own database.
 
-**Current functionality:**
+**Current functionality:**<br>
 Saving passwords for a website including save and update date.
 
-**Note:** :- 
+**Note:** <br>
 This app is not yet secure - Passwords are still saved in plaintext.
 
-**TODO:** :-
-Finish "Copy to clipboard" functionality. :-
-Create "Edit" functionality for editing existing passwords. :-
+**TODO:** <br>
+Finish "Copy to clipboard" functionality. <br>
+Create "Edit" functionality for editing existing passwords. <br>
 Encrypt passwords before saving.
