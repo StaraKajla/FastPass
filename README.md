@@ -5,7 +5,7 @@ Local password manager
 Download sourcecode and run it. On first run the app will create its own database.
 
 **Current functionality:**
-Saving passwords for a website including savetime.
+Saving passwords for a website including save and update date.
 
 **Note:** This app is not yet secure - Passwords are still saved in plaintext.
 
