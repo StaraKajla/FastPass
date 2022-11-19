@@ -1,8 +1,6 @@
 # FastPass
 Local password manager
 
-I created personal password manager.
-
 How to run:
 Download sourcecode and run it. On first run the app will create its own database.
 
