@@ -2,6 +2,7 @@
 Local password manager
 
 **How to run:**<br>
+pip install -r requrements.txt<br>
 Download sourcecode and run it. On first run the app will create its own database.
 
 **Current functionality:**<br>
