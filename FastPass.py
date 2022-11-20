@@ -2,8 +2,9 @@ import tkinter as tk
 import random
 import sqlite3
 from datetime import date
+import pyperclip
 
-version = "1.0.0 (Alpha)"
+version = "1.0.0"
 root = tk.Tk()
 root.geometry('425x400')
 root.title(f"Password manager v{version}")
@@ -83,21 +84,25 @@ def show():
         cursor.execute(sqlite_data_query)
         data = cursor.fetchall()
 
-        data1 = tk.Label(root, text="Website")
+        data1 = tk.Label(root, text="Website", font=font)
         data1.grid(row=5, column=1)
-        data2 = tk.Label(root, text="Password")
-        data2.grid(row=5, column=3)
-        data3 = tk.Label(root, text="Last update")
-        data3.grid(row=5, column=2)
+        data2 = tk.Label(root, text="Password", font=font)
+        data2.grid(row=5, column=2)
+        data3 = tk.Label(root, text="Last update", font=font)
+        data3.grid(row=5, column=3)
 
         dataRow = 6
+        copyLabel = []
+        counter = 0
         for i in data:
-            tk.Label(root, text=f"{i[0]}").grid(row=dataRow, column=1)
-            tk.Label(root, text=f"{i[1]}").grid(row=dataRow, column=3)
-            tk.Label(root, text=f"{i[2]}").grid(row=dataRow, column=2)
-            tk.Button(root, text="Copy to clipboard").grid(row=dataRow, column=6)
+            bg = 'white'
+            if counter % 2 == 0:
+                bg = 'light gray'
+            tk.Label(root, text=f"{i[0]}", bg=bg, width=17).grid(row=dataRow, column=1)
+            copyLabel.append(tk.Button(root, text=f"{i[1]}", bg=bg, width=17, command=lambda pwd=i[1]: copy(pwd)).grid(row=dataRow, column=2))
+            tk.Label(root, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
             dataRow += 1
-                              
+            counter += 1
 
     except sqlite3.Error as error:
         print("Error while connecting to sqlite", error)
@@ -107,34 +112,42 @@ def show():
             connection.close()
             print("The SQLite connection is closed")
 
+def copy(password):
+    pyperclip.copy(password)
+
 #Create database
 createDb()
 
+#Bold font
+font='Helvetica 16 bold'
+
 #Domain field
-tk.Label(text="Website:").grid(row=0, column=1)
+tk.Label(text="Website:", font=font).grid(row=0, column=1)
 domainEntry = tk.Entry(root)
 domainEntry.grid(row = 0, column = 2)
 
 #Password field
-tk.Label(text="Password:").grid(row=1, column=1)    
+tk.Label(text="Password:", font=font).grid(row=1, column=1)    
 pwdEntry = tk.Entry(root)
 pwdEntry.grid(row = 1, column = 2)
 
 #Save btn
-saveBtn = tk.Button(root, text="Save", command=save)
+saveBtn = tk.Button(root, text="Save", width=17, command=save)
 saveBtn.grid(row = 2, column = 2)
 
 #Random btn
-randPwd = tk.Button(root, text="Random", command=rand)
-randPwd.grid(row = 0, column = 3, rowspan=2)
+randPwd = tk.Button(root, text="Random\n Password", height=3, width=17, command=rand)
+randPwd.grid(row = 2, column = 1, rowspan=2)
 
 #Show
-showtest = tk.Button(root, text="Show", command=show)
-showtest.grid(row = 0, column = 5, rowspan=2, columnspan=2)
+showtest = tk.Button(root, text="Show all", width=17, command=show)
+showtest.grid(row = 3, column = 2)
 
 #Empty row - Does nothing
-tk.Label(text="").grid(row=3, column=0)
-
-
+tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
+tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
+tk.Label(text=f"Version: {version}").grid(row=2, column=3)
+tk.Label(text=f"{currentDate}").grid(row=3, column=3)
+tk.Label(text="").grid(row=4, column=0)
 
 root.mainloop()
