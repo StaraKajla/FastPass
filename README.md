@@ -6,11 +6,11 @@ Download sourcecode and run it. On first run the app will create its own databas
 
 **Current functionality:**<br>
 Saving passwords for a website including save and update date.
+Copy password from GUI.
 
 **Note:** <br>
 This app is not yet secure - Passwords are still saved in plaintext.
 
 **TODO:** <br>
-Finish "Copy to clipboard" functionality. <br>
 Create "Edit" functionality for editing existing passwords. <br>
 Encrypt passwords before saving.
