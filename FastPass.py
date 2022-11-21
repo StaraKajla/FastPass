@@ -50,10 +50,30 @@ def save():
         cursor = connection.cursor()
         print("Successfully connected to databse.")
 
-        sqlite_insert_query = f"INSERT INTO users(website, password, creation_date) VALUES ('{inpDom}', '{inpPwd}', '{currentDate}');"
-        cursor.execute(sqlite_insert_query)
-        connection.commit()
-        print(f"INFO: {inpDom}, {inpPwd}, ({currentDate}) - ADDED TO DATABASE")
+
+        sqlite_search_query = "SELECT website FROM users;"
+        cursor.execute(sqlite_search_query)
+        data = cursor.fetchall()
+
+        #Check if entry for website already exists and update if it does.
+        counter = 0
+        exists = False
+        for i in data:
+            website = str(i[0])
+            if inpDom.lower() in website.lower():
+                sqlite_update_query = f"UPDATE users SET password='{inpPwd}' WHERE website='{website}';"
+                cursor.execute(sqlite_update_query)
+                connection.commit()
+                exists = True
+            counter += 1
+                
+        #Else crate new entry
+        if exists == False:
+            sqlite_insert_query = f"INSERT INTO users(website, password, creation_date) VALUES ('{inpDom}', '{inpPwd}', '{currentDate}');"
+            cursor.execute(sqlite_insert_query)
+            connection.commit()
+            print(f"INFO: {inpDom}, {inpPwd}, ({currentDate}) - ADDED TO DATABASE")
+
         pwdEntry.delete(0, "end")
         domainEntry.delete(0, "end")
         show()
@@ -84,25 +104,30 @@ def show():
         cursor.execute(sqlite_data_query)
         data = cursor.fetchall()
 
-        data1 = tk.Label(root, text="Website", font=font)
-        data1.grid(row=5, column=1)
-        data2 = tk.Label(root, text="Password", font=font)
-        data2.grid(row=5, column=2)
-        data3 = tk.Label(root, text="Last update", font=font)
-        data3.grid(row=5, column=3)
+        #Display labels
+        tk.Label(root, text="Site/User", font=font).grid(row=5, column=1)
+        tk.Label(root, text="Password", font=font).grid(row=5, column=2)
+        tk.Label(root, text="Last update", font=font).grid(row=5, column=3)
 
+        #Set Row start location for data display
         dataRow = 6
-        copyLabel = []
         counter = 0
+        #Set different BG color for visibility reasons
         for i in data:
             bg = 'white'
             if counter % 2 == 0:
                 bg = 'light gray'
+            #Website
             tk.Label(root, text=f"{i[0]}", bg=bg, width=17).grid(row=dataRow, column=1)
-            copyLabel.append(tk.Button(root, text=f"{i[1]}", bg=bg, width=17, command=lambda pwd=i[1]: copy(pwd)).grid(row=dataRow, column=2))
+            #Password - Lambda -> Copy password to clipboard
+            tk.Button(root, text=f"{i[1]}", bg=bg, width=17, command=lambda pwd=i[1]: pyperclip.copy(pwd)).grid(row=dataRow, column=2)
+            #Date
             tk.Label(root, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
             dataRow += 1
             counter += 1
+
+        #TODO Create HIDE button functionality
+        #tk.Button(root, text="Hide", width=17).grid(row=(dataRow+1), column=2)
 
     except sqlite3.Error as error:
         print("Error while connecting to sqlite", error)
@@ -112,9 +137,6 @@ def show():
             connection.close()
             print("The SQLite connection is closed")
 
-def copy(password):
-    pyperclip.copy(password)
-
 #Create database
 createDb()
 
@@ -122,7 +144,7 @@ createDb()
 font='Helvetica 16 bold'
 
 #Domain field
-tk.Label(text="Website:", font=font).grid(row=0, column=1)
+tk.Label(text="Site/User:", font=font).grid(row=0, column=1)
 domainEntry = tk.Entry(root)
 domainEntry.grid(row = 0, column = 2)
 
@@ -140,10 +162,9 @@ randPwd = tk.Button(root, text="Random\n Password", height=3, width=17, command=
 randPwd.grid(row = 2, column = 1, rowspan=2)
 
 #Show
-showtest = tk.Button(root, text="Show all", width=17, command=show)
-showtest.grid(row = 3, column = 2)
+showBtn = tk.Button(root, text="Show all", width=17, command=show)
+showBtn.grid(row = 3, column = 2)
 
-#Empty row - Does nothing
 tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
 tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
 tk.Label(text=f"Version: {version}").grid(row=2, column=3)
