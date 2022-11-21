@@ -29,7 +29,6 @@ def createDb():
         cursor.execute(sqlite_create_table_query)
         connection.commit()
 
-
         cursor.close()
 
     except sqlite3.Error as error:
@@ -77,6 +76,8 @@ def save():
         pwdEntry.delete(0, "end")
         domainEntry.delete(0, "end")
         show()
+
+        cursor.close()
 
     except sqlite3.Error as error:
         print("Error while connecting to sqlite", error)
@@ -129,6 +130,8 @@ def show():
         #TODO Create HIDE button functionality
         #tk.Button(root, text="Hide", width=17).grid(row=(dataRow+1), column=2)
 
+        cursor.close()
+
     except sqlite3.Error as error:
         print("Error while connecting to sqlite", error)
 
@@ -161,14 +164,17 @@ saveBtn.grid(row = 2, column = 2)
 randPwd = tk.Button(root, text="Random\n Password", height=3, width=17, command=rand)
 randPwd.grid(row = 2, column = 1, rowspan=2)
 
-#Show
+#Show btn
 showBtn = tk.Button(root, text="Show all", width=17, command=show)
 showBtn.grid(row = 3, column = 2)
 
 tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
 tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
-tk.Label(text=f"Version: {version}").grid(row=2, column=3)
-tk.Label(text=f"{currentDate}").grid(row=3, column=3)
-tk.Label(text="").grid(row=4, column=0)
+tk.Label(text="Made by WIXO.").grid(row=2, column=3)
+tk.Label(text=f"Version: {version}").grid(row=3, column=3)
+
+
+#Empty row
+tk.Label(text=" ").grid(row=4, column=0, columnspan=3)
 
 root.mainloop()
