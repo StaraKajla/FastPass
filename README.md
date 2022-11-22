@@ -14,8 +14,8 @@ If cipher key is correct you can copy password from GUI on click from the button
 
 **NOTE**<br>
 It is advised to keep a duplicate copy of the password database incase you or an adversary deletes it.<br>
-A good idea is to follow [3 2 1 back-up rule](https://www.google.com/search?q=3+2+1+backup+rule)
+A good idea is to follow [3 2 1 backup rule](https://www.google.com/search?q=3+2+1+backup+rule)
 
 **TODO:** <br>
-Add multiple user support.
+Add multiple user support.<br>
 Add hide button.
