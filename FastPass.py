@@ -13,7 +13,7 @@ from Crypto.Util.Padding import unpad
 
 version = "1.0.0"
 root = tk.Tk()
-root.geometry('415x800')
+root.geometry('430x800')
 root.title(f"Password manager v{version}")
 currentDate = (date.today()).strftime("%B %d, %Y")
 
@@ -115,12 +115,12 @@ def show():
         data = cursor.fetchall()
 
         #Display labels
-        tk.Label(root, text="Site/User", font=font).grid(row=8, column=1)
+        tk.Label(root, text="Website", font=font).grid(row=8, column=1)
         tk.Label(root, text="Password", font=font).grid(row=8, column=2)
         tk.Label(root, text="Last update", font=font).grid(row=8, column=3)
 
         #Set Row start location for data display
-        dataRow = 9
+        dataRow = 10
         counter = 0
         #Set different BG color for visibility reasons
         for i in data:
@@ -133,9 +133,9 @@ def show():
             inpKey = keyEntry.get()
             pwd = decrypt(inpKey, i[1])
             
-            tk.Label(root, text=f"{i[0]}", bg=bg, width=17).grid(row=dataRow, column=1)
+            tk.Button(root, text=f"{i[0]}", bg=bg, width=17, command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=1)
             #Password - Lambda -> Copy password to clipboard
-            tk.Button(root, text=f"{pwd}", bg=bg, width=17, command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=2)
+            tk.Label(root, text=f"{pwd}", bg=bg, width=17).grid(row=dataRow, column=2)
             #Date
             tk.Label(root, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
             dataRow += 1
@@ -205,38 +205,43 @@ createDb()
 #Bold font
 font='Helvetica 16 bold'
 
+#User field
+tk.Label(text="Username:", font=font).grid(row=0, column=1)
+userEntry = tk.Entry(root)
+userEntry.grid(row=0, column=2)
+
 #Domain field
-tk.Label(text="Site/User:", font=font).grid(row=0, column=1)
+tk.Label(text="Website:", font=font).grid(row=1, column=1)
 domainEntry = tk.Entry(root)
-domainEntry.grid(row = 0, column = 2)
+domainEntry.grid(row = 1, column = 2)
 
 #Password field
-tk.Label(text="Password:", font=font).grid(row=1, column=1)    
+tk.Label(text="Password:", font=font).grid(row=2, column=1)    
 pwdEntry = tk.Entry(root)
-pwdEntry.grid(row = 1, column = 2)
+pwdEntry.grid(row = 2, column = 2)
 
 #Save btn
-saveBtn = tk.Button(root, text="Save", width=17, command=save)
-saveBtn.grid(row = 2, column = 2)
+saveBtn = tk.Button(root, text="Save", width=17, height=3, command=save)
+saveBtn.grid(row = 3, column = 2, rowspan=2)
 
 #Random btn
 randPwd = tk.Button(root, text="Random\n Password", height=3, width=17, command=rand)
-randPwd.grid(row = 2, column = 1, rowspan=2)
+randPwd.grid(row = 3, column = 1, rowspan=2)
 
 #Show btn
-showBtn = tk.Button(root, text="Show all", width=17, command=show)
-showBtn.grid(row = 3, column = 2)
+showBtn = tk.Button(root, text="Show all", width=17, height=3, command=show)
+showBtn.grid(row = 3, column = 3, rowspan=2)
 
 tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
 tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
 tk.Label(text="Made by WIXO.").grid(row=2, column=3)
-tk.Label(text=f"Version: {version}").grid(row=3, column=3)
+#tk.Label(text=f"Version: {version}").grid(row=3, column=3)
 
 
-tk.Label(root, text="").grid(row=4)
-tk.Label(root, text="Cipher key:", font=font).grid(row=5, column=1)
+tk.Label(root, text="").grid(row=5)
+tk.Label(root, text="Cipher key:", font=font).grid(row=6, column=1)
 keyEntry = tk.Entry(root, width=40, bg="lightgreen")
-keyEntry.grid(row=5, column=2, columnspan=2)
-tk.Label(root, text="").grid(row=6)
+keyEntry.grid(row=6, column=2, columnspan=2)
+tk.Label(root, text="").grid(row=7)
 
 root.mainloop()
