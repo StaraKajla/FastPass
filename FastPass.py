@@ -2,11 +2,18 @@ import tkinter as tk
 import random
 import sqlite3
 from datetime import date
+import base64
 import pyperclip
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from Crypto.Hash import SHA256
+from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import unpad
 
 version = "1.0.0"
 root = tk.Tk()
-root.geometry('425x400')
+root.geometry('415x800')
 root.title(f"Password manager v{version}")
 currentDate = (date.today()).strftime("%B %d, %Y")
 
@@ -43,12 +50,14 @@ def createDb():
 def save():
     inpPwd = pwdEntry.get()
     inpDom = domainEntry.get()
+    inpKey = keyEntry.get()
     
     try:
         connection = sqlite3.connect('database.db')
         cursor = connection.cursor()
         print("Successfully connected to databse.")
 
+        ciphertextBase64 = aesCbcPbkdf2EncryptToBase64(inpKey, inpPwd)
 
         sqlite_search_query = "SELECT website FROM users;"
         cursor.execute(sqlite_search_query)
@@ -59,8 +68,8 @@ def save():
         exists = False
         for i in data:
             website = str(i[0])
-            if inpDom.lower() in website.lower():
-                sqlite_update_query = f"UPDATE users SET password='{inpPwd}' WHERE website='{website}';"
+            if inpDom.lower() == website.lower():
+                sqlite_update_query = f"UPDATE users SET password='{ciphertextBase64}' WHERE website='{website}';"
                 cursor.execute(sqlite_update_query)
                 connection.commit()
                 exists = True
@@ -68,10 +77,10 @@ def save():
                 
         #Else crate new entry
         if exists == False:
-            sqlite_insert_query = f"INSERT INTO users(website, password, creation_date) VALUES ('{inpDom}', '{inpPwd}', '{currentDate}');"
+            sqlite_insert_query = f"INSERT INTO users(website, password, creation_date) VALUES ('{inpDom}','{ciphertextBase64}', '{currentDate}');"
             cursor.execute(sqlite_insert_query)
             connection.commit()
-            print(f"INFO: {inpDom}, {inpPwd}, ({currentDate}) - ADDED TO DATABASE")
+            print(f"INFO: {inpDom}, {ciphertextBase64}, ({currentDate}) - ADDED TO DATABASE")
 
         pwdEntry.delete(0, "end")
         domainEntry.delete(0, "end")
@@ -106,12 +115,12 @@ def show():
         data = cursor.fetchall()
 
         #Display labels
-        tk.Label(root, text="Site/User", font=font).grid(row=5, column=1)
-        tk.Label(root, text="Password", font=font).grid(row=5, column=2)
-        tk.Label(root, text="Last update", font=font).grid(row=5, column=3)
+        tk.Label(root, text="Site/User", font=font).grid(row=8, column=1)
+        tk.Label(root, text="Password", font=font).grid(row=8, column=2)
+        tk.Label(root, text="Last update", font=font).grid(row=8, column=3)
 
         #Set Row start location for data display
-        dataRow = 6
+        dataRow = 9
         counter = 0
         #Set different BG color for visibility reasons
         for i in data:
@@ -119,9 +128,14 @@ def show():
             if counter % 2 == 0:
                 bg = 'light gray'
             #Website
+            
+            #Call encrypted password and decrypt
+            inpKey = keyEntry.get()
+            pwd = decrypt(inpKey, i[1])
+            
             tk.Label(root, text=f"{i[0]}", bg=bg, width=17).grid(row=dataRow, column=1)
             #Password - Lambda -> Copy password to clipboard
-            tk.Button(root, text=f"{i[1]}", bg=bg, width=17, command=lambda pwd=i[1]: pyperclip.copy(pwd)).grid(row=dataRow, column=2)
+            tk.Button(root, text=f"{pwd}", bg=bg, width=17, command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=2)
             #Date
             tk.Label(root, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
             dataRow += 1
@@ -139,6 +153,51 @@ def show():
         if connection:
             connection.close()
             print("The SQLite connection is closed")
+
+def decrypt(Key, Password):
+    try:
+        decryptedtext = aesCbcPbkdf2DecryptFromBase64(Key, Password)
+        print(decryptedtext)
+        return decryptedtext
+
+    except ValueError:
+        return ""
+
+def base64Encoding(input):
+    dataBase64 = base64.b64encode(input)
+    dataBase64P = dataBase64.decode("UTF-8")
+    return dataBase64P
+
+def base64Decoding(input):
+    return base64.decodebytes(input.encode("ascii"))
+
+def generateSalt32Byte():
+    return get_random_bytes(32)
+
+def aesCbcPbkdf2EncryptToBase64(password, plaintext):
+    passwordBytes = password.encode("ascii")
+    salt = generateSalt32Byte()
+    PBKDF2_ITERATIONS = 15000
+    encryptionKey = PBKDF2(passwordBytes, salt, 32, count=PBKDF2_ITERATIONS, hmac_hash_module=SHA256)
+    cipher = AES.new(encryptionKey, AES.MODE_CBC)
+    ciphertext = cipher.encrypt(pad(plaintext.encode("ascii"), AES.block_size))
+    ivBase64 = base64Encoding(cipher.iv)
+    saltBase64 = base64Encoding(salt)
+    ciphertextBase64 = base64Encoding(ciphertext)
+    return saltBase64 + ":" + ivBase64 + ":" + ciphertextBase64
+
+def aesCbcPbkdf2DecryptFromBase64(password, ciphertextBase64): 
+    passwordBytes = password.encode("ascii")
+    data = ciphertextBase64.split(":")
+    salt = base64Decoding(data[0])
+    iv = base64Decoding(data[1])
+    ciphertext = base64Decoding(data[2])
+    PBKDF2_ITERATIONS = 15000
+    decryptionKey = PBKDF2(passwordBytes, salt, 32, count=PBKDF2_ITERATIONS, hmac_hash_module=SHA256)
+    cipher = AES.new(decryptionKey, AES.MODE_CBC, iv)
+    decryptedtext = unpad(cipher.decrypt(ciphertext), AES.block_size)
+    decryptedtextP = decryptedtext.decode("UTF-8")
+    return decryptedtextP
 
 #Create database
 createDb()
@@ -174,7 +233,10 @@ tk.Label(text="Made by WIXO.").grid(row=2, column=3)
 tk.Label(text=f"Version: {version}").grid(row=3, column=3)
 
 
-#Empty row
-tk.Label(text=" ").grid(row=4, column=0, columnspan=3)
+tk.Label(root, text="").grid(row=4)
+tk.Label(root, text="Cipher key:", font=font).grid(row=5, column=1)
+keyEntry = tk.Entry(root, width=40, bg="lightgreen")
+keyEntry.grid(row=5, column=2, columnspan=2)
+tk.Label(root, text="").grid(row=6)
 
 root.mainloop()
