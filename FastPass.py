@@ -261,16 +261,4 @@ showPwd.grid(column=0, row=2, padx=20, pady=20)
 showBtn = tk.Button(newPwd, text="Show all", width=17, height=3, command=show)
 showBtn.grid(row = 3, column = 3, rowspan=2)
 
-#tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
-#tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
-#tk.Label(text="Made by WIXO.").grid(row=2, column=3)
-#tk.Label(text=f"Version: {version}").grid(row=3, column=3)
-
-
-tk.Label(root, text="").grid(row=5)
-"""tk.Label(root, text="Cipher key:", font=font).grid(row=6, column=1)
-keyEntry = tk.Entry(root, width=40, bg="lightgreen")
-keyEntry.grid(row=6, column=2, columnspan=2)"""
-tk.Label(root, text="").grid(row=7)
-
 root.mainloop()
