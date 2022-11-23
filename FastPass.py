@@ -1,8 +1,10 @@
 import tkinter as tk
+from tkinter import ttk
 import random
 import sqlite3
 from datetime import date
 import base64
+from PIL import ImageTk, Image
 import pyperclip
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Cipher import AES
@@ -13,7 +15,7 @@ from Crypto.Util.Padding import unpad
 
 version = "1.0.0"
 root = tk.Tk()
-root.geometry('430x800')
+root.geometry('500x800')
 root.title(f"Password manager v{version}")
 currentDate = (date.today()).strftime("%B %d, %Y")
 
@@ -115,9 +117,9 @@ def show():
         data = cursor.fetchall()
 
         #Display labels
-        tk.Label(root, text="Website", font=font).grid(row=8, column=1)
-        tk.Label(root, text="Password", font=font).grid(row=8, column=2)
-        tk.Label(root, text="Last update", font=font).grid(row=8, column=3)
+        tk.Label(showPwd, text="Website", font=font).grid(row=8, column=1)
+        tk.Label(showPwd, text="Password", font=font).grid(row=8, column=2)
+        tk.Label(showPwd, text="Last update", font=font).grid(row=8, column=3)
 
         #Set Row start location for data display
         dataRow = 10
@@ -133,11 +135,11 @@ def show():
             inpKey = keyEntry.get()
             pwd = decrypt(inpKey, i[1])
             
-            tk.Button(root, text=f"{i[0]}", bg=bg, width=17, command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=1)
+            tk.Button(showPwd, text=f"{i[0]}", bg=bg, width=17, command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=1)
             #Password - Lambda -> Copy password to clipboard
-            tk.Label(root, text=f"{pwd}", bg=bg, width=17).grid(row=dataRow, column=2)
+            tk.Label(showPwd, text=f"{pwd}", bg=bg, width=17).grid(row=dataRow, column=2)
             #Date
-            tk.Label(root, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
+            tk.Label(showPwd, text=f"{i[2]}", width=17).grid(row=dataRow, column=3)
             dataRow += 1
             counter += 1
 
@@ -157,7 +159,6 @@ def show():
 def decrypt(Key, Password):
     try:
         decryptedtext = aesCbcPbkdf2DecryptFromBase64(Key, Password)
-        print(decryptedtext)
         return decryptedtext
 
     except ValueError:
@@ -203,45 +204,73 @@ def aesCbcPbkdf2DecryptFromBase64(password, ciphertextBase64):
 createDb()
 
 #Bold font
-font='Helvetica 16 bold'
+font='Arial 16 bold'
+
+#User information frame
+userInfo = ttk.LabelFrame(root, text='User information')
+userInfo.grid(column=0, row=0, padx=50, pady=30)
 
 #User field
-tk.Label(text="Username:", font=font).grid(row=0, column=1)
-userEntry = tk.Entry(root)
-userEntry.grid(row=0, column=2)
+tk.Label(userInfo, text="Username:", font=font).grid(row=0, column=1)
+userEntry = tk.Entry(userInfo)
+userEntry.grid(row=0, column=2, columnspan=1)
 
-#Domain field
-tk.Label(text="Website:", font=font).grid(row=1, column=1)
-domainEntry = tk.Entry(root)
+#Cipher key
+tk.Label(userInfo, text="Cipher key:", font=font).grid(row=1, column=1)
+keyEntry = tk.Entry(userInfo, width=20)
+keyEntry.grid(row=1, column=2, columnspan=1)
+
+Image_1=Image.open('user.png')
+Image_1=Image_1.resize((58,58))
+Image_1=ImageTk.PhotoImage(Image_1)
+tk.Label(userInfo, image=Image_1, width=140).grid(row=0, column=3, rowspan=3)
+ 
+
+#Save/Update field
+newPwd = ttk.LabelFrame(root, text='Save/Update password')
+newPwd.grid(column=0, row=1, padx=20, pady=20)
+
+#Website entry
+tk.Label(newPwd, text="Website:", font=font).grid(row=1, column=1)
+domainEntry = tk.Entry(newPwd)
 domainEntry.grid(row = 1, column = 2)
 
-#Password field
-tk.Label(text="Password:", font=font).grid(row=2, column=1)    
-pwdEntry = tk.Entry(root)
+#Password entry
+tk.Label(newPwd, text="Password:", font=font).grid(row=2, column=1)    
+pwdEntry = tk.Entry(newPwd)
 pwdEntry.grid(row = 2, column = 2)
 
+Image_2=Image.open('key.png')
+Image_2=Image_2.resize((58,50))
+Image_2=ImageTk.PhotoImage(Image_2)
+tk.Label(newPwd, image=Image_2, width=120).grid(row=1, column=3, rowspan=2)
+
 #Save btn
-saveBtn = tk.Button(root, text="Save", width=17, height=3, command=save)
-saveBtn.grid(row = 3, column = 2, rowspan=2)
+saveBtn = tk.Button(newPwd, text="Save", width=17, height=3, command=save)
+saveBtn.grid(row = 3, column = 2, rowspan=1)
 
 #Random btn
-randPwd = tk.Button(root, text="Random\n Password", height=3, width=17, command=rand)
-randPwd.grid(row = 3, column = 1, rowspan=2)
+randPwd = tk.Button(newPwd, text="Random\n Password", height=3, width=17, command=rand)
+randPwd.grid(row = 3, column = 1, rowspan=1)
+
+#Password list field
+showPwd = ttk.LabelFrame(root, text='Password list')
+showPwd.grid(column=0, row=2, padx=20, pady=20)
 
 #Show btn
-showBtn = tk.Button(root, text="Show all", width=17, height=3, command=show)
+showBtn = tk.Button(newPwd, text="Show all", width=17, height=3, command=show)
 showBtn.grid(row = 3, column = 3, rowspan=2)
 
-tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
-tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
-tk.Label(text="Made by WIXO.").grid(row=2, column=3)
+#tk.Label(text="Info", font=font, width=12).grid(row=0, column=3)
+#tk.Label(text="Click on password to copy", justify='left', anchor='w').grid(row=1, column=3)
+#tk.Label(text="Made by WIXO.").grid(row=2, column=3)
 #tk.Label(text=f"Version: {version}").grid(row=3, column=3)
 
 
 tk.Label(root, text="").grid(row=5)
-tk.Label(root, text="Cipher key:", font=font).grid(row=6, column=1)
+"""tk.Label(root, text="Cipher key:", font=font).grid(row=6, column=1)
 keyEntry = tk.Entry(root, width=40, bg="lightgreen")
-keyEntry.grid(row=6, column=2, columnspan=2)
+keyEntry.grid(row=6, column=2, columnspan=2)"""
 tk.Label(root, text="").grid(row=7)
 
 root.mainloop()
