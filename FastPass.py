@@ -153,10 +153,6 @@ def show():
         dataRow = 1
         counter = 0
         inpKey = keyEntry.get()
-        buttons.clear()
-
-        """day0 = datetime.strptime(currentDate, "%d-%m-%Y")
-        print(difference.days)"""
 
         #TODO: Sort password list before displaying.
         for i in data:            
@@ -180,12 +176,9 @@ def show():
             btn = tk.Button(showPwd, text="X", bg="#ff6759", foreground=white, cursor="hand2", width=2,
                             command=lambda website=i[0]: deletePassword(website))
             btn.grid(row=dataRow, column=4, padx=12)
-
-            buttons.append(i[0])
             dataRow += 1
             counter += 1
 
-        print(buttons)
         cursor.close()
 
     except sqlite3.Error as error:
@@ -243,7 +236,6 @@ def addUser():
         sqlite_data_query = f"INSERT INTO users(username) VALUES ('{username}');"
         cursor.execute(sqlite_data_query)
         connection.commit()
-        print("Success")
         tk.messagebox.showinfo(title="Success!", message=f"Username: '{username}' successfully added to the database!")           
 
     except sqlite3.Error as error:
@@ -385,8 +377,5 @@ showPwd.grid(column=0, row=2, padx=50, pady=35)
 #Show btn
 showBtn = tk.Button(newPwd, text="Show all", width=14, height=2, command=show, bg=blue, foreground=white, cursor="hand2")
 showBtn.grid(row = 3, column = 3, rowspan=2, pady=10, padx=20)
-
-#List of all buttons inside show
-buttons = []
 
 root.mainloop()
