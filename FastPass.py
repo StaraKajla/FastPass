@@ -3,7 +3,7 @@ from tkinter import ttk
 import tkinter.messagebox
 import random
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 import base64
 from PIL import ImageTk, Image
 import pyperclip
@@ -13,14 +13,6 @@ from Crypto.Random import get_random_bytes
 from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad
 from Crypto.Util.Padding import unpad
-
-version = "1.0.0"
-root = tk.Tk()
-root.configure(background="#ffffff")
-#Width*Height
-root.geometry('530x800')
-root.title(f"FastPass v{version}")
-currentDate = (date.today()).strftime("%B %d, %Y")
 
 def createDb():
     try:
@@ -75,18 +67,20 @@ def save():
         print("Successfully connected to databse.")
 
         ciphertextBase64 = aesCbcPbkdf2EncryptToBase64(inpKey, inpPwd)
-
         sqlite_search_query = f"SELECT id FROM users WHERE username='{inpUser}';"
         cursor.execute(sqlite_search_query)
+        
         data = None
-
         data = cursor.fetchall()
-        if data != None:
+
+        try:
             uid = data[0][0]
-
-        sqlite_search_query = f"SELECT website FROM passwords WHERE user_id='{uid}';"
-        cursor.execute(sqlite_search_query)
-        data = cursor.fetchall()
+            sqlite_search_query = f"SELECT website FROM passwords WHERE user_id='{uid}';"
+            cursor.execute(sqlite_search_query)
+            data = cursor.fetchall()
+        except IndexError:
+            tk.messagebox.showerror(title="Username error", message=f"User can't be found!")
+            return
 
         #Check if entry for website already exists and update if it does.
         exists = False
@@ -120,6 +114,7 @@ def save():
             connection.close()
             print("The SQLite connection is closed")
 
+
 #Create random password
 def rand():
     pwdEntry.delete(0, "end")
@@ -127,6 +122,7 @@ def rand():
     length = 16
     randPwd = "".join(random.sample(chars, length))
     pwdEntry.insert(1, f"{randPwd}")
+
 
 def show():
     try:
@@ -145,27 +141,51 @@ def show():
                                 SELECT id FROM users where username ="{username}");'''
         cursor.execute(sqlite_data_query)
         data = cursor.fetchall()
-
-        #Display labels
-        tk.Label(showPwd, text="Website", font=font).grid(row=0, column=1, padx=10, pady=5)
-        tk.Label(showPwd, text="Password", font=font).grid(row=0, column=2, padx=10, pady=5)
-        tk.Label(showPwd, text="Last update", font=font).grid(row=0, column=3, padx=10, pady=5)
+        if len(data) == 0:
+            tk.messagebox.showinfo(title="Infobox", message=f"No entries to display.")
+            return
+        
+        tk.Label(showPwd, image=imgWorld, border=0).grid(row=0, column=1, padx=5, pady=8)
+        tk.Label(showPwd, image=imgKey, border=0).grid(row=0, column=2, padx=5, pady=8)
+        tk.Label(showPwd, image=imgClock, border=0).grid(row=0, column=3, padx=5, pady=8)
 
         #Set Row start location for data display
         dataRow = 1
         counter = 0
         inpKey = keyEntry.get()
+        buttons.clear()
 
+        """day0 = datetime.strptime(currentDate, "%d-%m-%Y")
+        print(difference.days)"""
+
+        #TODO: Sort password list before displaying.
         for i in data:            
             pwd = decrypt(inpKey, i[1])
+            #Website
             tk.Button(showPwd, text=f"{i[0]}", width=15, bg=blue, foreground=white, cursor="hand2", 
             command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=1, padx=18, pady=2)
-            tk.Label(showPwd, text=f"{pwd}", width=15).grid(row=dataRow, column=2)
-            tk.Label(showPwd, text=f"{i[2]}", width=15).grid(row=dataRow, column=3)
-            tk.Button(showPwd, text="X", bg="red").grid(row=dataRow, column=4)
+            #Password
+            tk.Label(showPwd, text=f"{pwd}", width=15, background=white).grid(row=dataRow, column=2)
+            #Date
+            entryDate = datetime.strptime(i[2], "%d-%m-%Y")
+            nowDate = datetime.strptime(currentDate, "%d-%m-%Y")
+            difference = (nowDate - entryDate).days
+            if difference == 1:
+                out = "1 day ago"
+            else:
+                out = f"{difference} days ago"
+            
+            tk.Label(showPwd, text=f"{out}", width=15, background=white).grid(row=dataRow, column=3)
+            #Delete X
+            btn = tk.Button(showPwd, text="X", bg="#ff6759", foreground=white, cursor="hand2", width=2,
+                            command=lambda website=i[0]: deletePassword(website))
+            btn.grid(row=dataRow, column=4, padx=12)
+
+            buttons.append(i[0])
             dataRow += 1
             counter += 1
 
+        print(buttons)
         cursor.close()
 
     except sqlite3.Error as error:
@@ -176,8 +196,9 @@ def show():
             connection.close()
             print("The SQLite connection is closed")
 
-#TODO: Figure out how to create delete function.
-"""def deletePassword(website):
+
+#TODO: Figure out how to delete on click.
+def deletePassword(website):
     try:
         connection = sqlite3.connect('database.db')
         cursor = connection.cursor()
@@ -186,7 +207,6 @@ def show():
 
         sqlite_delete_query = f'''DELETE FROM passwords WHERE website="{website}" AND user_id=(
                                   SELECT id FROM users WHERE username="{username}");'''
-        print(sqlite_delete_query)
         cursor.execute(sqlite_delete_query)
         connection.commit()
 
@@ -194,9 +214,11 @@ def show():
         print("Error while connecting to sqlite", error)
 
     finally:
+        show()
         if connection:
             connection.close()
-            print("The SQLite connection is closed")"""
+            print("The SQLite connection is closed")
+
 
 def addUser():
     try:
@@ -232,6 +254,7 @@ def addUser():
             connection.close()
             print("The SQLite connection is closed")
 
+
 def decrypt(Key, Password):
     try:
         decryptedtext = aesCbcPbkdf2DecryptFromBase64(Key, Password)
@@ -240,16 +263,20 @@ def decrypt(Key, Password):
     except ValueError:
         return ""
 
+
 def base64Encoding(input):
     dataBase64 = base64.b64encode(input)
     dataBase64P = dataBase64.decode("UTF-8")
     return dataBase64P
 
+
 def base64Decoding(input):
     return base64.decodebytes(input.encode("ascii"))
 
+
 def generateSalt32Byte():
     return get_random_bytes(32)
+
 
 def aesCbcPbkdf2EncryptToBase64(password, plaintext):
     passwordBytes = password.encode("ascii")
@@ -262,6 +289,7 @@ def aesCbcPbkdf2EncryptToBase64(password, plaintext):
     saltBase64 = base64Encoding(salt)
     ciphertextBase64 = base64Encoding(ciphertext)
     return saltBase64 + ":" + ivBase64 + ":" + ciphertextBase64
+
 
 def aesCbcPbkdf2DecryptFromBase64(password, ciphertextBase64): 
     passwordBytes = password.encode("ascii")
@@ -276,6 +304,14 @@ def aesCbcPbkdf2DecryptFromBase64(password, ciphertextBase64):
     decryptedtextP = decryptedtext.decode("UTF-8")
     return decryptedtextP
 
+version = "1.0.0"
+root = tk.Tk()
+root.configure(background="#ffffff")
+#Width*Height
+root.geometry('530x800')
+root.title(f"FastPass v{version}")
+currentDate = date.today().strftime("%d-%m-%Y")
+
 #Create database
 createDb()
 
@@ -287,45 +323,52 @@ blue = "#1f63e0"
 white = "#ffffff"
 
 #User information frame
-userInfo = ttk.LabelFrame(root, text='User information')
-userInfo.grid(column=0, row=0, padx=50, pady=10)
+userInfo = tk.LabelFrame(root, text='User information', background=white)
+userInfo.grid(column=0, row=0, padx=50, pady=25)
 
 #User field
-tk.Label(userInfo, text="Username:", font=font, pady=5, padx=25).grid(row=0, column=1)
-userEntry = tk.Entry(userInfo)
-userEntry.grid(row=0, column=2, columnspan=1)
+tk.Label(userInfo, text="Username:", font=font, background=white).grid(row=0, column=1, padx=10, pady=10)
+userEntry = tk.Entry(userInfo, borderwidth=2)
+userEntry.grid(row=0, column=2, columnspan=1, padx=20)
 
 #Cipher key
-tk.Label(userInfo, text="Cipher key:", font=font, pady=10).grid(row=1, column=1)
-keyEntry = tk.Entry(userInfo, width=20)
-keyEntry.grid(row=1, column=2, columnspan=1)
+tk.Label(userInfo, text="Secret key:", font=font, background=white).grid(row=1, column=1)
+keyEntry = tk.Entry(userInfo, borderwidth=2)
+keyEntry.grid(row=1, column=2, columnspan=1, pady=10)
 
 Image_1=Image.open('user1.png')
 Image_1=Image_1.resize((58,58))
 Image_1=ImageTk.PhotoImage(Image_1)
-btn1 = tk.Button(userInfo, image=Image_1, height=60, width=60, command=addUser, cursor="hand2")
-btn1.grid(row=0, column=3, rowspan=2)
-tk.Label(userInfo, text="", width=20).grid(row=3, column=3)
- 
+btn1 = tk.Button(userInfo, image=Image_1, height=60, width=60, command=addUser, cursor="hand2", border=0)
+btn1.grid(row=0, column=3, rowspan=2, padx=10)
 
+lbl1 = tk.Label(userInfo, text="TIP: Enter username and click on add icon to create new user.", width=60, background="#68fcb2")
+lbl1.grid(row=2, column=0, columnspan=4)
+ 
 #Save/Update frame
-newPwd = ttk.LabelFrame(root, text='Save/Update password')
+newPwd = tk.LabelFrame(root, text='Save/Update password', background=white)
 newPwd.grid(column=0, row=1, padx=50, pady=10)
 
 #Website entry
-tk.Label(newPwd, text="Website:", font=font, pady=5, padx=20).grid(row=1, column=1)
-domainEntry = tk.Entry(newPwd)
-domainEntry.grid(row = 1, column = 2, pady=5, padx=25)
+tk.Label(newPwd, text="Website:", font=font, background=white).grid(row=1, column=1, pady=10, padx=20)
+domainEntry = tk.Entry(newPwd, border=2)
+domainEntry.grid(row = 1, column = 2, pady=10)
 
 #Password entry
-tk.Label(newPwd, text="Password:", font=font).grid(row=2, column=1)    
-pwdEntry = tk.Entry(newPwd)
+tk.Label(newPwd, text="Password:", font=font, background=white).grid(row=2, column=1, padx=10, pady=10)    
+pwdEntry = tk.Entry(newPwd, border=2)
 pwdEntry.grid(row = 2, column = 2)
 
-Image_2=Image.open('key.png')
-Image_2=Image_2.resize((58,50))
+Image_2=Image.open('key.png').resize((58,50))
 Image_2=ImageTk.PhotoImage(Image_2)
-tk.Label(newPwd, image=Image_2, width=120).grid(row=1, column=3, rowspan=2)
+tk.Label(newPwd, image=Image_2, border=0).grid(row=1, column=3, rowspan=2)
+
+imgKey=Image.open('key1.png').resize((32,32))
+imgKey = ImageTk.PhotoImage(imgKey)
+imgWorld=Image.open('world.png').resize((32,32))
+imgWorld = ImageTk.PhotoImage(imgWorld)
+imgClock=Image.open('clock.png').resize((32,32))
+imgClock = ImageTk.PhotoImage(imgClock)
 
 #Save btn
 saveBtn = tk.Button(newPwd, text="Save", width=14, height=2, command=save, bg=blue, foreground=white, cursor="hand2")
@@ -333,14 +376,17 @@ saveBtn.grid(row = 3, column = 2, rowspan=1, pady=10)
 
 #Random btn
 randPwd = tk.Button(newPwd, text="Random\n Password", height=2, width=14, command=rand, bg=blue, foreground=white, cursor="hand2")
-randPwd.grid(row = 3, column = 1, rowspan=1)
+randPwd.grid(row = 3, column = 1, rowspan=1, pady=10, padx=20)
 
 #Password list field
-showPwd = ttk.LabelFrame(root, text='Password list')
-showPwd.grid(column=0, row=2, padx=20, pady=20)
+showPwd = tk.LabelFrame(root, text='Password list', background=white)
+showPwd.grid(column=0, row=2, padx=50, pady=35)
 
 #Show btn
 showBtn = tk.Button(newPwd, text="Show all", width=14, height=2, command=show, bg=blue, foreground=white, cursor="hand2")
-showBtn.grid(row = 3, column = 3, rowspan=2)
+showBtn.grid(row = 3, column = 3, rowspan=2, pady=10, padx=20)
+
+#List of all buttons inside show
+buttons = []
 
 root.mainloop()
