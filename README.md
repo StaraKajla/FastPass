@@ -7,7 +7,7 @@ Download sourcecode and run it. On first run the app will create its own databas
 
 **Current functionality:**<br>
 Multiple user support<br>
-AES 256 encryption with 15.000 PBKDF2 iterations using provided Secret Key(Optional)
+AES 256 encryption with 15.000 PBKDF2 iterations using provided Secret Key(Optional)<br>
 Delete stored passwords<br>
 Local database<br>
 
