@@ -11,7 +11,7 @@ AES 256 encryption with 15.000 PBKDF2 iterations using provided Secret Key(Optio
 Delete stored passwords<br>
 Local database<br>
 
-**INFO**
+**INFO**<br>
 To retrieve passwords from database you must **provide the same key that was used when a password was saved**.<br>
 If secret key is incorrect, no password will be returned.<br>
 For additional security you can select different Secret Keys for each password.<br>
