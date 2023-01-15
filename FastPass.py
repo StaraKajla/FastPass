@@ -145,21 +145,22 @@ def show():
             tk.messagebox.showinfo(title="Infobox", message=f"No entries to display.")
             return
         
-        tk.Label(showPwd, image=imgWorld, border=0).grid(row=0, column=1, padx=5, pady=8)
-        tk.Label(showPwd, image=imgKey, border=0).grid(row=0, column=2, padx=5, pady=8)
-        tk.Label(showPwd, image=imgClock, border=0).grid(row=0, column=3, padx=5, pady=8)
+        tk.Label(showPwd, image=imgWorld, border=0).grid(row=0, column=1, padx=5, pady=16)
+        tk.Label(showPwd, image=imgKey, border=0).grid(row=0, column=2, padx=5, pady=16)
+        tk.Label(showPwd, image=imgClock, border=0).grid(row=0, column=3, padx=5, pady=16)
 
         #Set Row start location for data display
         dataRow = 1
-        counter = 0
         inpKey = keyEntry.get()
-
+        #a = []
+        #TODO: Var "a" is for listbox - Change name later
         #TODO: Sort password list before displaying.
         for i in data:            
             pwd = decrypt(inpKey, i[1])
             #Website
-            tk.Button(showPwd, text=f"{i[0]}", width=15, bg=blue, foreground=white, cursor="hand2", 
-            command=lambda pwd=pwd: pyperclip.copy(pwd)).grid(row=dataRow, column=1, padx=18, pady=2)
+            copyBtn = tk.Button(showPwd, text=f"{i[0]}", width=15, bg=blue, foreground=white, cursor="hand2", 
+            command=lambda pwd=pwd: pyperclip.copy(pwd), activebackground=blue, activeforeground=white)
+            copyBtn.grid(row=dataRow, column=1, padx=18, pady=2)
             #Password
             tk.Label(showPwd, text=f"{pwd}", width=15, background=white).grid(row=dataRow, column=2)
             #Date
@@ -174,11 +175,15 @@ def show():
             tk.Label(showPwd, text=f"{out}", width=15, background=white).grid(row=dataRow, column=3)
             #Delete X
             btn = tk.Button(showPwd, text="X", bg="#ff6759", foreground=white, cursor="hand2", width=2,
-                            command=lambda website=i[0]: deletePassword(website))
-            btn.grid(row=dataRow, column=4, padx=12)
+                            command=lambda website=i[0]: deletePassword(website), activebackground="#fc5444", activeforeground=white,
+                            border=1, font="bold")
+            btn.grid(row=dataRow, column=4, padx=12, pady=4)
+            #a.append(f"{i[0]} {pwd} {out}") TODO: For listbox
             dataRow += 1
-            counter += 1
-
+        #TODO: List passwords in listbox
+        """b = tk.StringVar(value=a)
+        c = tk.Listbox(root, listvariable=b, height=10, width=100, selectmode="browse")
+        c.grid(row=0, column=1)"""
         cursor.close()
 
     except sqlite3.Error as error:
@@ -190,7 +195,6 @@ def show():
             print("The SQLite connection is closed")
 
 
-#TODO: Figure out how to delete on click.
 def deletePassword(website):
     try:
         connection = sqlite3.connect('database.db')
@@ -300,7 +304,7 @@ version = "1.0.0"
 root = tk.Tk()
 root.configure(background="#ffffff")
 #Width*Height
-root.geometry('530x800')
+root.geometry('1600x800')
 root.title(f"FastPass v{version}")
 currentDate = date.today().strftime("%d-%m-%Y")
 
@@ -328,10 +332,10 @@ tk.Label(userInfo, text="Secret key:", font=font, background=white).grid(row=1, 
 keyEntry = tk.Entry(userInfo, borderwidth=2)
 keyEntry.grid(row=1, column=2, columnspan=1, pady=10)
 
-Image_1=Image.open('user1.png')
+Image_1=Image.open('Images/user.png')
 Image_1=Image_1.resize((58,58))
 Image_1=ImageTk.PhotoImage(Image_1)
-btn1 = tk.Button(userInfo, image=Image_1, height=60, width=60, command=addUser, cursor="hand2", border=0)
+btn1 = tk.Button(userInfo, image=Image_1, height=60, width=60, command=addUser, cursor="hand2", border=1)
 btn1.grid(row=0, column=3, rowspan=2, padx=10)
 
 lbl1 = tk.Label(userInfo, text="TIP: Enter username and click on add icon to create new user.", width=60, background="#68fcb2")
@@ -342,40 +346,42 @@ newPwd = tk.LabelFrame(root, text='Save/Update password', background=white)
 newPwd.grid(column=0, row=1, padx=50, pady=10)
 
 #Website entry
-tk.Label(newPwd, text="Website:", font=font, background=white).grid(row=1, column=1, pady=10, padx=20)
-domainEntry = tk.Entry(newPwd, border=2)
-domainEntry.grid(row = 1, column = 2, pady=10)
+tk.Label(newPwd, text="Website:", font=font, background=white).grid(row=1, column=1, pady=10, padx=31)
+domainEntry = tk.Entry(newPwd, border=2, width=30)
+domainEntry.grid(row = 1, column = 2, pady=10, columnspan=2, padx=40)
 
 #Password entry
 tk.Label(newPwd, text="Password:", font=font, background=white).grid(row=2, column=1, padx=10, pady=10)    
-pwdEntry = tk.Entry(newPwd, border=2)
-pwdEntry.grid(row = 2, column = 2)
+pwdEntry = tk.Entry(newPwd, border=2, width=30)
+pwdEntry.grid(row = 2, column = 2, columnspan=2, padx=40)
 
-Image_2=Image.open('key.png').resize((58,50))
-Image_2=ImageTk.PhotoImage(Image_2)
-tk.Label(newPwd, image=Image_2, border=0).grid(row=1, column=3, rowspan=2)
-
-imgKey=Image.open('key1.png').resize((32,32))
+imgKey=Image.open('Images/key1.png').resize((32,32))
 imgKey = ImageTk.PhotoImage(imgKey)
-imgWorld=Image.open('world.png').resize((32,32))
+imgWorld=Image.open('Images/world.png').resize((32,32))
 imgWorld = ImageTk.PhotoImage(imgWorld)
-imgClock=Image.open('clock.png').resize((32,32))
+imgClock=Image.open('Images/clock.png').resize((32,32))
 imgClock = ImageTk.PhotoImage(imgClock)
+imgRandom=Image.open('Images/random.bmp').resize((48,48))
+imgRandom = ImageTk.PhotoImage(imgRandom)
+imgList=Image.open('Images/list.bmp').resize((48,48))
+imgList = ImageTk.PhotoImage(imgList)
+imgSave = Image.open('Images/save.bmp').resize((48,48))
+imgSave = ImageTk.PhotoImage(imgSave)
 
 #Save btn
-saveBtn = tk.Button(newPwd, text="Save", width=14, height=2, command=save, bg=blue, foreground=white, cursor="hand2")
+saveBtn = tk.Button(newPwd, command=save, image=imgSave, cursor="hand2", border=0)
 saveBtn.grid(row = 3, column = 2, rowspan=1, pady=10)
 
 #Random btn
-randPwd = tk.Button(newPwd, text="Random\n Password", height=2, width=14, command=rand, bg=blue, foreground=white, cursor="hand2")
-randPwd.grid(row = 3, column = 1, rowspan=1, pady=10, padx=20)
+randPwd = tk.Button(newPwd, image=imgRandom, command=rand, cursor="hand2", border=0)
+randPwd.grid(row = 3, column = 1, rowspan=1, pady=10, padx=26)
 
 #Password list field
 showPwd = tk.LabelFrame(root, text='Password list', background=white)
-showPwd.grid(column=0, row=2, padx=50, pady=35)
+showPwd.grid(column=1, row=0, padx=20, pady=25, rowspan=10)
 
 #Show btn
-showBtn = tk.Button(newPwd, text="Show all", width=14, height=2, command=show, bg=blue, foreground=white, cursor="hand2")
-showBtn.grid(row = 3, column = 3, rowspan=2, pady=10, padx=20)
+showBtn = tk.Button(newPwd, image=imgList, command=show, cursor="hand2", border=0)
+showBtn.grid(row = 3, column = 3, rowspan=2, pady=10, padx=26)
 
 root.mainloop()
